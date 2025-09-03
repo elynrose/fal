@@ -55,10 +55,6 @@
 
                         <!-- Action Buttons -->
                         <div class="d-flex gap-2">
-                            <a href="{{ route('themes.show', $theme) }}" 
-                               class="btn btn-outline-primary btn-sm flex-fill">
-                                <i class="fas fa-eye me-1"></i>View Examples
-                            </a>
                             <a href="{{ route('generations.create') }}?theme={{ $theme->id }}" 
                                class="btn btn-primary btn-sm flex-fill">
                                 <i class="fas fa-magic me-1"></i>Generate
