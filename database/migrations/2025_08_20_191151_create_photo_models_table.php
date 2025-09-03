@@ -13,13 +13,11 @@ return new class extends Migration
     {
         Schema::create('photo_models', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('name');
             $table->text('description')->nullable();
             $table->string('image_path');
-            $table->string('model_id')->nullable(); // fal model ID after training
+            $table->foreignId('album_id')->constrained()->onDelete('cascade');
             $table->enum('status', ['pending', 'training', 'completed', 'failed'])->default('pending');
-            $table->json('training_metadata')->nullable();
             $table->timestamps();
         });
     }

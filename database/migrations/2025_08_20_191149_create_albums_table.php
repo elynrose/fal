@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->text('description')->nullable();
+            $table->string('trigger_word')->nullable();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->enum('status', ['pending', 'training', 'completed', 'failed'])->default('pending');
             $table->string('model_id')->nullable(); // AI model ID after training

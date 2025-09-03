@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('training_sessions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->foreignId('photo_model_id')->constrained()->onDelete('cascade');
+            $table->foreignId('album_id')->nullable()->constrained()->onDelete('cascade');
             $table->string('session_id')->unique(); // fal session ID
             $table->enum('status', ['pending', 'running', 'completed', 'failed'])->default('pending');
             $table->json('training_config')->nullable();

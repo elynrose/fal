@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('generated_images', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('user_id');
-            $table->unsignedBigInteger('photo_model_id');
-            $table->unsignedBigInteger('theme_id');
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('photo_model_id')->constrained()->onDelete('cascade');
+            $table->foreignId('theme_id')->constrained()->onDelete('cascade');
             $table->string('image_path');
             $table->text('prompt_used');
             $table->json('generation_parameters')->nullable();
@@ -25,9 +25,6 @@ return new class extends Migration
             $table->timestamp('generated_at')->nullable();
             $table->timestamps();
         });
-
-        // Foreign key constraints will be added by the safety migration
-        // after all tables are created to avoid dependency issues
     }
 
     /**
