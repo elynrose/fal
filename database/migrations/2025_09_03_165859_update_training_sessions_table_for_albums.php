@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -18,19 +19,20 @@ return new class extends Migration
             }
         });
 
-        Schema::table('training_sessions', function (Blueprint $table) {
-            // Drop FK on photo_model_id if present
-            try {
+        // Drop FK on photo_model_id safely (PostgreSQL)
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('ALTER TABLE training_sessions DROP CONSTRAINT IF EXISTS training_sessions_photo_model_id_foreign');
+        } else {
+            // Fallback for other drivers: attempt drop using Schema (may fail harmlessly if not present)
+            Schema::table('training_sessions', function (Blueprint $table) {
                 if (Schema::hasColumn('training_sessions', 'photo_model_id')) {
                     $table->dropForeign(['photo_model_id']);
                 }
-            } catch (\Throwable $e) {
-                // Ignore if FK doesn't exist
-            }
-        });
+            });
+        }
 
+        // Drop photo_model_id column if present
         Schema::table('training_sessions', function (Blueprint $table) {
-            // Drop photo_model_id column if present
             if (Schema::hasColumn('training_sessions', 'photo_model_id')) {
                 $table->dropColumn('photo_model_id');
             }
@@ -52,8 +54,10 @@ return new class extends Migration
                 }
                 $table->dropColumn('album_id');
             }
+        });
 
-            // Recreate photo_model_id column and FK
+        // Recreate photo_model_id column and FK
+        Schema::table('training_sessions', function (Blueprint $table) {
             if (!Schema::hasColumn('training_sessions', 'photo_model_id')) {
                 $table->foreignId('photo_model_id')->constrained()->onDelete('cascade');
             }
