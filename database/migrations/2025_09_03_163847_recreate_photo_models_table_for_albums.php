@@ -11,6 +11,19 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Before dropping photo_models, drop FK from training_sessions that references it (PostgreSQL requirement)
+        if (Schema::hasTable('training_sessions')) {
+            Schema::table('training_sessions', function (Blueprint $table) {
+                try {
+                    if (Schema::hasColumn('training_sessions', 'photo_model_id')) {
+                        $table->dropForeign(['photo_model_id']);
+                    }
+                } catch (\Throwable $e) {
+                    // Ignore if FK doesn't exist or already dropped
+                }
+            });
+        }
+
         // Drop the old table
         Schema::dropIfExists('photo_models');
         
