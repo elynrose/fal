@@ -104,7 +104,7 @@
                             <i class="fas fa-arrow-left me-2"></i>Back to List
                         </a>
                         @if($photo->status === 'pending')
-                            <form action="{{ route('photos.train', $photo) }}" method="POST" class="d-inline">
+                            <form action="{{ route('albums.train', $photo->album) }}" method="POST" class="d-inline">
                                 @csrf
                                 <button type="submit" class="btn btn-primary">
                                     <i class="fas fa-play me-2"></i>Train Model

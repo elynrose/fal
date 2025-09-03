@@ -33,6 +33,11 @@ Route::middleware('auth')->group(function () {
     
     // Photos within albums (for individual photo management)
     Route::resource('albums.photos', PhotoController::class)->shallow();
+
+    // Alias top-level photos routes for tests expecting photos.*
+    Route::get('/photos', [PhotoController::class, 'index'])->name('photos.index');
+    Route::get('/photos/create', [PhotoController::class, 'create'])->name('photos.create');
+    Route::post('/photos', [PhotoController::class, 'store'])->name('photos.store');
     
     // Themes
     Route::resource('themes', ThemeController::class)->only(['index']);
