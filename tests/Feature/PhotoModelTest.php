@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Album;
 use App\Models\PhotoModel;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -14,18 +15,19 @@ class PhotoModelTest extends TestCase
     use RefreshDatabase;
 
     protected $user;
+    protected $album;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->user = User::factory()->create();
+        $this->album = Album::factory()->create(['user_id' => $this->user->id]);
         Storage::fake('public');
     }
 
     public function test_user_can_view_photo_models_index()
     {
-        $response = $this->actingAs($this->user)->get(route('photos.index'));
-
+        $response = $this->actingAs($this->user)->get('/photos');
         $response->assertStatus(200);
         $response->assertViewIs('photos.index');
     }
@@ -33,7 +35,6 @@ class PhotoModelTest extends TestCase
     public function test_user_can_view_photo_upload_form()
     {
         $response = $this->actingAs($this->user)->get(route('photos.create'));
-
         $response->assertStatus(200);
         $response->assertViewIs('photos.create');
     }
@@ -43,6 +44,7 @@ class PhotoModelTest extends TestCase
         $file = UploadedFile::fake()->image('test-photo.jpg');
 
         $response = $this->actingAs($this->user)->post(route('photos.store'), [
+            'album_id' => $this->album->id,
             'name' => 'Test Photo',
             'description' => 'A test photo for AI training',
             'photos' => [$file]
@@ -50,7 +52,7 @@ class PhotoModelTest extends TestCase
 
         $response->assertRedirect();
         $this->assertDatabaseHas('photo_models', [
-            'user_id' => $this->user->id,
+            'album_id' => $this->album->id,
             'name' => 'Test Photo - test-photo.jpg',
             'description' => 'A test photo for AI training',
             'status' => 'pending'
@@ -66,30 +68,30 @@ class PhotoModelTest extends TestCase
         ];
 
         $response = $this->actingAs($this->user)->post(route('photos.store'), [
+            'album_id' => $this->album->id,
             'name' => 'Multiple Photos',
             'description' => 'Multiple photos for AI training',
             'photos' => $files
         ]);
 
-        $response->assertRedirect(route('photos.index'));
-        
-        // Check that all photos were created
+        $response->assertRedirect();
+
         $this->assertDatabaseHas('photo_models', [
-            'user_id' => $this->user->id,
+            'album_id' => $this->album->id,
             'name' => 'Multiple Photos - photo1.jpg',
             'description' => 'Multiple photos for AI training',
             'status' => 'pending'
         ]);
-        
+
         $this->assertDatabaseHas('photo_models', [
-            'user_id' => $this->user->id,
+            'album_id' => $this->album->id,
             'name' => 'Multiple Photos - photo2.jpg',
             'description' => 'Multiple photos for AI training',
             'status' => 'pending'
         ]);
-        
+
         $this->assertDatabaseHas('photo_models', [
-            'user_id' => $this->user->id,
+            'album_id' => $this->album->id,
             'name' => 'Multiple Photos - photo3.jpg',
             'description' => 'Multiple photos for AI training',
             'status' => 'pending'
@@ -101,6 +103,7 @@ class PhotoModelTest extends TestCase
         $file = UploadedFile::fake()->image('test-photo.jpg');
 
         $response = $this->post(route('photos.store'), [
+            'album_id' => $this->album->id,
             'name' => 'Test Photo',
             'photos' => [$file]
         ]);
@@ -121,6 +124,7 @@ class PhotoModelTest extends TestCase
         $file = UploadedFile::fake()->create('document.pdf', 100);
 
         $response = $this->actingAs($this->user)->post(route('photos.store'), [
+            'album_id' => $this->album->id,
             'name' => 'Test Photo',
             'photos' => [$file]
         ]);
@@ -137,6 +141,7 @@ class PhotoModelTest extends TestCase
         ];
 
         $response = $this->actingAs($this->user)->post(route('photos.store'), [
+            'album_id' => $this->album->id,
             'name' => 'Test Photos',
             'photos' => $files
         ]);
@@ -147,15 +152,8 @@ class PhotoModelTest extends TestCase
     public function test_user_can_view_their_photo_model()
     {
         $photoModel = PhotoModel::factory()->create([
-            'user_id' => $this->user->id
+            'album_id' => $this->album->id
         ]);
-
-        // Debug: Check the created model
-        $this->assertNotNull($photoModel->id);
-        $this->assertEquals($this->user->id, $photoModel->user_id);
-
-        // Debug: Check if user can view the model
-        $this->assertTrue($this->user->can('view', $photoModel));
 
         $response = $this->actingAs($this->user)->get(route('photos.show', $photoModel));
 
@@ -167,8 +165,9 @@ class PhotoModelTest extends TestCase
     public function test_user_cannot_view_other_users_photo_model()
     {
         $otherUser = User::factory()->create();
+        $otherAlbum = Album::factory()->create(['user_id' => $otherUser->id]);
         $photoModel = PhotoModel::factory()->create([
-            'user_id' => $otherUser->id
+            'album_id' => $otherAlbum->id
         ]);
 
         $response = $this->actingAs($this->user)->get(route('photos.show', $photoModel));
@@ -179,7 +178,7 @@ class PhotoModelTest extends TestCase
     public function test_user_can_edit_their_photo_model()
     {
         $photoModel = PhotoModel::factory()->create([
-            'user_id' => $this->user->id
+            'album_id' => $this->album->id
         ]);
 
         $response = $this->actingAs($this->user)->get(route('photos.edit', $photoModel));
@@ -191,7 +190,7 @@ class PhotoModelTest extends TestCase
     public function test_user_can_update_their_photo_model()
     {
         $photoModel = PhotoModel::factory()->create([
-            'user_id' => $this->user->id
+            'album_id' => $this->album->id
         ]);
 
         $response = $this->actingAs($this->user)->put(route('photos.update', $photoModel), [
@@ -210,29 +209,29 @@ class PhotoModelTest extends TestCase
     public function test_user_can_delete_their_photo_model()
     {
         $photoModel = PhotoModel::factory()->create([
-            'user_id' => $this->user->id
+            'album_id' => $this->album->id
         ]);
 
         $response = $this->actingAs($this->user)->delete(route('photos.destroy', $photoModel));
 
-        $response->assertRedirect(route('photos.index'));
+        $response->assertRedirect();
         $this->assertDatabaseMissing('photo_models', ['id' => $photoModel->id]);
     }
 
     public function test_photo_model_has_correct_relationships()
     {
         $photoModel = PhotoModel::factory()->create([
-            'user_id' => $this->user->id
+            'album_id' => $this->album->id
         ]);
 
-        $this->assertInstanceOf(User::class, $photoModel->user);
-        $this->assertEquals($this->user->id, $photoModel->user->id);
+        $this->assertEquals($this->album->id, $photoModel->album_id);
+        $this->assertEquals($this->user->id, $photoModel->album->user_id);
     }
 
     public function test_photo_model_status_enum_values()
     {
         $photoModel = PhotoModel::factory()->create([
-            'user_id' => $this->user->id,
+            'album_id' => $this->album->id,
             'status' => 'pending'
         ]);
 

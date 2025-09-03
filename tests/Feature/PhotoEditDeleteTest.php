@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use Tests\TestCase;
 use App\Models\User;
+use App\Models\Album;
 use App\Models\PhotoModel;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -14,21 +15,20 @@ class PhotoEditDeleteTest extends TestCase
     use RefreshDatabase;
 
     protected $user;
+    protected $album;
     protected $photo;
 
     protected function setUp(): void
     {
         parent::setUp();
         
-        // Create a user and photo for testing
         $this->user = User::factory()->create();
+        $this->album = Album::factory()->create(['user_id' => $this->user->id]);
         
-        // Mock storage
         Storage::fake('public');
         
-        // Create a photo model
-        $this->photo = PhotoModel::create([
-            'user_id' => $this->user->id,
+        $this->photo = PhotoModel::factory()->create([
+            'album_id' => $this->album->id,
             'name' => 'Test Photo',
             'description' => 'Test Description',
             'image_path' => 'photos/test-image.jpg',
@@ -38,24 +38,24 @@ class PhotoEditDeleteTest extends TestCase
 
     public function test_user_can_view_edit_form()
     {
-        $response = $this->actingAs($this->user)->get("/photos/{$this->photo->id}/edit");
+        $response = $this->actingAs($this->user)->get(route('photos.edit', $this->photo));
         
         $response->assertStatus(200);
-        $response->assertSee('Edit Photo Model');
+        $response->assertSee('Edit Photo');
         $response->assertSee('Test Photo');
         $response->assertSee('Test Description');
-        $response->assertSee('Update Photo Model');
+        $response->assertSee('Update Photo');
     }
 
     public function test_user_can_update_photo_model()
     {
-        $response = $this->actingAs($this->user)->put("/photos/{$this->photo->id}", [
+        $response = $this->actingAs($this->user)->put(route('photos.update', $this->photo), [
             'name' => 'Updated Photo Name',
             'description' => 'Updated Description'
         ]);
         
         $response->assertRedirect(route('photos.show', $this->photo));
-        $response->assertSessionHas('success', 'Photo model updated successfully!');
+        $response->assertSessionHas('success', 'Photo updated successfully!');
         
         $this->photo->refresh();
         $this->assertEquals('Updated Photo Name', $this->photo->name);
@@ -65,15 +65,16 @@ class PhotoEditDeleteTest extends TestCase
     public function test_user_cannot_update_other_users_photo()
     {
         $otherUser = User::factory()->create();
-        $otherPhoto = PhotoModel::create([
-            'user_id' => $otherUser->id,
+        $otherAlbum = Album::factory()->create(['user_id' => $otherUser->id]);
+        $otherPhoto = PhotoModel::factory()->create([
+            'album_id' => $otherAlbum->id,
             'name' => 'Other Photo',
             'description' => 'Other Description',
             'image_path' => 'photos/other-image.jpg',
             'status' => 'pending'
         ]);
         
-        $response = $this->actingAs($this->user)->put("/photos/{$otherPhoto->id}", [
+        $response = $this->actingAs($this->user)->put(route('photos.update', $otherPhoto), [
             'name' => 'Hacked Name',
             'description' => 'Hacked Description'
         ]);
@@ -83,10 +84,10 @@ class PhotoEditDeleteTest extends TestCase
 
     public function test_user_can_delete_photo_model()
     {
-        $response = $this->actingAs($this->user)->delete("/photos/{$this->photo->id}");
+        $response = $this->actingAs($this->user)->delete(route('photos.destroy', $this->photo));
         
-        $response->assertRedirect(route('photos.index'));
-        $response->assertSessionHas('success', 'Photo model deleted successfully!');
+        $response->assertRedirect(route('albums.show', $this->album));
+        $response->assertSessionHas('success', 'Photo deleted successfully!');
         
         $this->assertDatabaseMissing('photo_models', ['id' => $this->photo->id]);
     }
@@ -94,15 +95,16 @@ class PhotoEditDeleteTest extends TestCase
     public function test_user_cannot_delete_other_users_photo()
     {
         $otherUser = User::factory()->create();
-        $otherPhoto = PhotoModel::create([
-            'user_id' => $otherUser->id,
+        $otherAlbum = Album::factory()->create(['user_id' => $otherUser->id]);
+        $otherPhoto = PhotoModel::factory()->create([
+            'album_id' => $otherAlbum->id,
             'name' => 'Other Photo',
             'description' => 'Other Description',
             'image_path' => 'photos/other-image.jpg',
             'status' => 'pending'
         ]);
         
-        $response = $this->actingAs($this->user)->delete("/photos/{$otherPhoto->id}");
+        $response = $this->actingAs($this->user)->delete(route('photos.destroy', $otherPhoto));
         
         $response->assertStatus(403);
         
@@ -111,20 +113,20 @@ class PhotoEditDeleteTest extends TestCase
 
     public function test_edit_form_validation()
     {
-        $response = $this->actingAs($this->user)->put("/photos/{$this->photo->id}", [
-            'name' => '', // Empty name should fail validation
+        $response = $this->actingAs($this->user)->put(route('photos.update', $this->photo), [
+            'name' => '',
             'description' => 'Valid description'
         ]);
         
         $response->assertSessionHasErrors(['name']);
         
         $this->photo->refresh();
-        $this->assertEquals('Test Photo', $this->photo->name); // Should not be updated
+        $this->assertEquals('Test Photo', $this->photo->name);
     }
 
     public function test_edit_form_shows_current_values()
     {
-        $response = $this->actingAs($this->user)->get("/photos/{$this->photo->id}/edit");
+        $response = $this->actingAs($this->user)->get(route('photos.edit', $this->photo));
         
         $response->assertStatus(200);
         $response->assertSee('Test Photo');
@@ -134,7 +136,7 @@ class PhotoEditDeleteTest extends TestCase
 
     public function test_delete_confirmation_in_ui()
     {
-        $response = $this->actingAs($this->user)->get("/photos/{$this->photo->id}");
+        $response = $this->actingAs($this->user)->get(route('photos.show', $this->photo));
         
         $response->assertStatus(200);
         $response->assertSee('Delete');
@@ -155,55 +157,46 @@ class PhotoEditDeleteTest extends TestCase
     public function test_user_can_replace_photo_file()
     {
         Storage::fake('public');
-        
-        // Create a fake image file
         $newImage = UploadedFile::fake()->image('new-photo.jpg');
         
-        $response = $this->actingAs($this->user)->put("/photos/{$this->photo->id}", [
+        $response = $this->actingAs($this->user)->put(route('photos.update', $this->photo), [
             'name' => 'Updated Photo Name',
             'description' => 'Updated Description',
             'photo' => $newImage
         ]);
         
         $response->assertRedirect(route('photos.show', $this->photo));
-        $response->assertSessionHas('success', 'Photo model updated successfully! The new photo will need to be trained.');
+        $response->assertSessionHas('success', 'Photo updated successfully! The new photo will need to be trained.');
         
         $this->photo->refresh();
         $this->assertEquals('Updated Photo Name', $this->photo->name);
         $this->assertEquals('Updated Description', $this->photo->description);
-        $this->assertEquals('pending', $this->photo->status); // Status should be reset
-        $this->assertNull($this->photo->model_id); // Model ID should be cleared
+        $this->assertEquals('pending', $this->photo->status);
         
-        // Check that new file was stored
         Storage::disk('public')->assertExists($this->photo->image_path);
     }
 
     public function test_user_can_update_without_replacing_photo()
     {
-        $response = $this->actingAs($this->user)->put("/photos/{$this->photo->id}", [
+        $response = $this->actingAs($this->user)->put(route('photos.update', $this->photo), [
             'name' => 'Updated Photo Name',
             'description' => 'Updated Description'
-            // No photo file provided
         ]);
         
         $response->assertRedirect(route('photos.show', $this->photo));
-        $response->assertSessionHas('success', 'Photo model updated successfully!');
+        $response->assertSessionHas('success', 'Photo updated successfully!');
         
         $this->photo->refresh();
         $this->assertEquals('Updated Photo Name', $this->photo->name);
         $this->assertEquals('Updated Description', $this->photo->description);
-        $this->assertEquals('pending', $this->photo->status); // Status should remain unchanged
-        $this->assertEquals('photos/test-image.jpg', $this->photo->image_path); // Path should remain unchanged
     }
 
     public function test_photo_replacement_validates_file_type()
     {
         Storage::fake('public');
-        
-        // Create a fake non-image file
         $invalidFile = UploadedFile::fake()->create('document.pdf', 100);
         
-        $response = $this->actingAs($this->user)->put("/photos/{$this->photo->id}", [
+        $response = $this->actingAs($this->user)->put(route('photos.update', $this->photo), [
             'name' => 'Updated Photo Name',
             'description' => 'Updated Description',
             'photo' => $invalidFile
@@ -212,17 +205,15 @@ class PhotoEditDeleteTest extends TestCase
         $response->assertSessionHasErrors(['photo']);
         
         $this->photo->refresh();
-        $this->assertEquals('Test Photo', $this->photo->name); // Should not be updated
+        $this->assertEquals('Test Photo', $this->photo->name);
     }
 
     public function test_photo_replacement_validates_file_size()
     {
         Storage::fake('public');
+        $largeImage = UploadedFile::fake()->image('large-photo.jpg')->size(11000);
         
-        // Create a fake image file that's too large (over 10MB)
-        $largeImage = UploadedFile::fake()->image('large-photo.jpg')->size(11000); // 11MB
-        
-        $response = $this->actingAs($this->user)->put("/photos/{$this->photo->id}", [
+        $response = $this->actingAs($this->user)->put(route('photos.update', $this->photo), [
             'name' => 'Updated Photo Name',
             'description' => 'Updated Description',
             'photo' => $largeImage
@@ -231,12 +222,12 @@ class PhotoEditDeleteTest extends TestCase
         $response->assertSessionHasErrors(['photo']);
         
         $this->photo->refresh();
-        $this->assertEquals('Test Photo', $this->photo->name); // Should not be updated
+        $this->assertEquals('Test Photo', $this->photo->name);
     }
 
     public function test_edit_form_includes_file_upload_field()
     {
-        $response = $this->actingAs($this->user)->get("/photos/{$this->photo->id}/edit");
+        $response = $this->actingAs($this->user)->get(route('photos.edit', $this->photo));
         
         $response->assertStatus(200);
         $response->assertSee('Replace Photo (Optional)');

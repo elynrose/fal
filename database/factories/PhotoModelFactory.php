@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Models\User;
+use App\Models\Album;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -18,19 +18,14 @@ class PhotoModelFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id' => User::factory(),
             'name' => $this->faker->words(2, true),
             'description' => $this->faker->sentence(),
             'image_path' => 'photos/test-image.jpg',
-            'model_id' => null,
+            'album_id' => Album::factory(),
             'status' => $this->faker->randomElement(['pending', 'training', 'completed', 'failed']),
-            'training_metadata' => null,
         ];
     }
 
-    /**
-     * Indicate that the model is pending.
-     */
     public function pending(): static
     {
         return $this->state(fn (array $attributes) => [
@@ -38,9 +33,6 @@ class PhotoModelFactory extends Factory
         ]);
     }
 
-    /**
-     * Indicate that the model is training.
-     */
     public function training(): static
     {
         return $this->state(fn (array $attributes) => [
@@ -48,20 +40,13 @@ class PhotoModelFactory extends Factory
         ]);
     }
 
-    /**
-     * Indicate that the model is completed.
-     */
     public function completed(): static
     {
         return $this->state(fn (array $attributes) => [
             'status' => 'completed',
-            'model_id' => 'test-model-' . $this->faker->uuid(),
         ]);
     }
 
-    /**
-     * Indicate that the model failed.
-     */
     public function failed(): static
     {
         return $this->state(fn (array $attributes) => [

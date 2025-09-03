@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Models\PhotoModel;
+use App\Models\Album;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -20,7 +20,7 @@ class TrainingSessionFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
-            'photo_model_id' => PhotoModel::factory(),
+            'album_id' => Album::factory(),
             'session_id' => 'session-' . $this->faker->uuid(),
             'status' => $this->faker->randomElement(['pending', 'running', 'completed', 'failed']),
             'training_config' => [
