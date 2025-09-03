@@ -7,6 +7,9 @@ use App\Http\Controllers\ThemeController;
 use App\Http\Controllers\TrainingController;
 use Illuminate\Support\Facades\Route;
 
+// Ensure shallow {photo} routes don't swallow /photos/create
+Route::pattern('photo', '[0-9]+');
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
