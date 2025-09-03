@@ -34,7 +34,7 @@ class PhotoModelTest extends TestCase
 
     public function test_user_can_view_photo_upload_form()
     {
-        $response = $this->actingAs($this->user)->get(route('photos.create'));
+        $response = $this->actingAs($this->user)->get('/photos/create');
         $response->assertStatus(200);
         $response->assertViewIs('photos.create');
     }
