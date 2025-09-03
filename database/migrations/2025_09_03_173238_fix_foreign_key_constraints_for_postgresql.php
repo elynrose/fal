@@ -14,34 +14,52 @@ return new class extends Migration
         // This migration ensures all foreign key constraints are properly set up
         // for PostgreSQL compatibility after all tables are created
         
-        // Check if generated_images table exists and has proper foreign keys
+        // Wait a moment to ensure all tables are fully created
+        sleep(1);
+        
+        // Check if generated_images table exists and add foreign keys
         if (Schema::hasTable('generated_images')) {
             Schema::table('generated_images', function (Blueprint $table) {
-                // Drop existing foreign keys if they exist (PostgreSQL specific)
+                // Add foreign key constraints safely
                 try {
-                    $table->dropForeign(['user_id']);
+                    $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
                 } catch (\Exception $e) {
-                    // Foreign key doesn't exist, continue
+                    // Foreign key already exists or failed, continue
                 }
                 
                 try {
-                    $table->dropForeign(['photo_model_id']);
+                    $table->foreign('photo_model_id')->references('id')->on('photo_models')->onDelete('cascade');
                 } catch (\Exception $e) {
-                    // Foreign key doesn't exist, continue
+                    // Foreign key already exists or failed, continue
                 }
                 
                 try {
-                    $table->dropForeign(['theme_id']);
+                    $table->foreign('theme_id')->references('id')->on('themes')->onDelete('cascade');
                 } catch (\Exception $e) {
-                    // Foreign key doesn't exist, continue
+                    // Foreign key already exists or failed, continue
                 }
             });
-
-            // Re-add foreign key constraints
-            Schema::table('generated_images', function (Blueprint $table) {
-                $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-                $table->foreign('photo_model_id')->references('id')->on('photo_models')->onDelete('cascade');
-                $table->foreign('theme_id')->references('id')->on('themes')->onDelete('cascade');
+        }
+        
+        // Check if photo_models table exists and add foreign keys
+        if (Schema::hasTable('photo_models')) {
+            Schema::table('photo_models', function (Blueprint $table) {
+                try {
+                    $table->foreign('album_id')->references('id')->on('albums')->onDelete('cascade');
+                } catch (\Exception $e) {
+                    // Foreign key already exists or failed, continue
+                }
+            });
+        }
+        
+        // Check if training_sessions table exists and add foreign keys
+        if (Schema::hasTable('training_sessions')) {
+            Schema::table('training_sessions', function (Blueprint $table) {
+                try {
+                    $table->foreign('album_id')->references('id')->on('albums')->onDelete('cascade');
+                } catch (\Exception $e) {
+                    // Foreign key already exists or failed, continue
+                }
             });
         }
     }
@@ -54,3 +72,4 @@ return new class extends Migration
         // No need to reverse this migration
     }
 };
+

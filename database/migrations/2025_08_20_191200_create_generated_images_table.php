@@ -26,12 +26,8 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // Add foreign key constraints after table creation
-        Schema::table('generated_images', function (Blueprint $table) {
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-            $table->foreign('photo_model_id')->references('id')->on('photo_models')->onDelete('cascade');
-            $table->foreign('theme_id')->references('id')->on('themes')->onDelete('cascade');
-        });
+        // Foreign key constraints will be added by the safety migration
+        // after all tables are created to avoid dependency issues
     }
 
     /**
