@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('generated_images', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->foreignId('photo_model_id')->constrained()->onDelete('cascade');
-            $table->foreignId('theme_id')->constrained()->onDelete('cascade');
+            $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('photo_model_id');
+            $table->unsignedBigInteger('theme_id');
             $table->string('image_path');
             $table->text('prompt_used');
             $table->json('generation_parameters')->nullable();
@@ -24,6 +24,13 @@ return new class extends Migration
             $table->text('error_message')->nullable();
             $table->timestamp('generated_at')->nullable();
             $table->timestamps();
+        });
+
+        // Add foreign key constraints after table creation
+        Schema::table('generated_images', function (Blueprint $table) {
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('photo_model_id')->references('id')->on('photo_models')->onDelete('cascade');
+            $table->foreign('theme_id')->references('id')->on('themes')->onDelete('cascade');
         });
     }
 
