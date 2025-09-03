@@ -122,7 +122,7 @@
     </div>
 
     <!-- Training Sessions -->
-    @if($photo->trainingSessions->count() > 0)
+    @if(false)
     <div class="row mb-4">
         <div class="col-12">
             <div class="card">
@@ -130,58 +130,7 @@
                     <h3 class="h5 fw-bold mb-0">Training Sessions</h3>
                 </div>
                 <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th class="px-3 py-3">Session ID</th>
-                                    <th class="px-3 py-3">Status</th>
-                                    <th class="px-3 py-3">Started</th>
-                                    <th class="px-3 py-3">Completed</th>
-                                    <th class="px-3 py-3">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($photo->trainingSessions as $session)
-                                <tr>
-                                    <td class="px-3 py-3">
-                                        <code class="small">{{ $session->session_id }}</code>
-                                    </td>
-                                    <td class="px-3 py-3">
-                                        @if($session->status === 'pending')
-                                            <span class="status-badge bg-warning bg-opacity-10 text-warning">
-                                                Pending
-                                            </span>
-                                        @elseif($session->status === 'running')
-                                            <span class="status-badge bg-primary bg-opacity-10 text-primary">
-                                                Running
-                                            </span>
-                                        @elseif($session->status === 'completed')
-                                            <span class="status-badge bg-success bg-opacity-10 text-success">
-                                                Completed
-                                            </span>
-                                        @else
-                                            <span class="status-badge bg-danger bg-opacity-10 text-danger">
-                                                Failed
-                                            </span>
-                                        @endif
-                                    </td>
-                                    <td class="px-3 py-3">
-                                        {{ $session->started_at ? $session->started_at->format('M j, Y g:i A') : 'N/A' }}
-                                    </td>
-                                    <td class="px-3 py-3">
-                                        {{ $session->completed_at ? $session->completed_at->format('M j, Y g:i A') : 'N/A' }}
-                                    </td>
-                                    <td class="px-3 py-3">
-                                        <a href="{{ route('training.show', $session) }}" class="btn btn-sm btn-outline-primary">
-                                            <i class="fas fa-eye me-1"></i>View
-                                        </a>
-                                    </td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
+                    <!-- Removed in album-based training -->
                 </div>
             </div>
         </div>

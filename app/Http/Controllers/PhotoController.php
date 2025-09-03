@@ -41,6 +41,7 @@ class PhotoController extends Controller
             'album_id' => 'required|exists:albums,id',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
+            'photos' => 'required|array|min:1',
             'photos.*' => 'required|image|mimes:jpeg,png,jpg,gif|max:10240'
         ]);
 

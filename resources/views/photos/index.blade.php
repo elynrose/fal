@@ -17,10 +17,10 @@
         </div>
     </div>
 
-    @if($photoModels->count() > 0)
+    @if($photos->count() > 0)
         <!-- Photos Grid -->
         <div class="row">
-            @foreach($photoModels as $photoModel)
+            @foreach($photos as $photoModel)
                 <div class="col-lg-4 col-md-6 mb-4">
                     <div class="photo-card">
                         <div class="position-relative">
