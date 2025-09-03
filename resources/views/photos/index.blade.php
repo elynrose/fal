@@ -63,15 +63,6 @@
                                    class="btn btn-outline-primary btn-sm flex-fill">
                                     <i class="fas fa-eye me-1"></i>View
                                 </a>
-                                
-                                @if($photoModel->status === 'pending')
-                                    <form action="{{ route('photos.train', $photoModel) }}" method="POST" class="flex-fill">
-                                        @csrf
-                                        <button type="submit" class="btn btn-primary btn-sm w-100">
-                                            <i class="fas fa-play me-1"></i>Train
-                                        </button>
-                                    </form>
-                                @endif
                             </div>
 
                             <!-- Edit/Delete Buttons -->
